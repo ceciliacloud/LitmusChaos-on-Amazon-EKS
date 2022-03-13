@@ -1,0 +1,7 @@
+portal:
+  server:
+    service:
+      type: ClusterIP
+  frontend:
+    service:
+      type: LoadBalancer
