@@ -27,14 +27,14 @@ Now that we've covered the tools we're working with, let's get started!
 
 We will begin by creating an Amazon EKS cluster with managed nodes. In order to achieve this, we will install LitmusChaos and a demo application. Next, we will install chaos experiments which will run on the demo application. Lastly, we will observe the behavior.
 
-### PRE-REQUISITES
-
 Prior to beginning the project, we must ensure that we have the following software installed on our local PC:
 
 - [AWS CLI version 2](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
 - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
 - [Helm](https://www.eksworkshop.com/beginner/060_helm/helm_intro/install/index.html)
+
+Please click each of the links above, then follow each  guide to install the software on your local PC.
 
 Once you have installed the `AWS CLI version 2`, check the version on Terminal using the following command:
 
@@ -50,7 +50,7 @@ $ aws configure
 ```
 ![](./images/awsconfigure.png)
 
-Also, sign in as the IAM user to the AWS management console. If you do not have an AWS account, please create one for free at [aws.amazon.com](https://aws.amazon.com).
+sign in as the IAM user to the AWS management console. If you do not have an AWS account, please create one for free at [aws.amazon.com](https://aws.amazon.com).
 
 ![](./images/iamlogin.png)
 
@@ -83,7 +83,7 @@ $ helm version --short
 ![](./images/helm.png)
 
 
-### STEP 1: Create EKS Cluster
+### STEP 1: Create an EKS Cluster
 
 Create a new EKS cluster using eksctl using the following commands:
 
@@ -129,9 +129,7 @@ _Be sure to replace ${AWS_REGION} with your preferred region._
 $ eksctl create cluster -f cluster.yaml
 ```
 
-Be sure to replace the **${ }** with the corresponding information.
-
-Now take a moment and relax. Your brand new cluster awaits! Please be patient, this may take several minutes.
+Now take a moment to sit back and relax. Your brand new cluster awaits! Please be patient, this may take several minutes.
 
 ![](./images/create2.png)
 
@@ -143,51 +141,73 @@ Once it has been completed, the status will change to `CREATE_COMPLETE`.
 
 ![](./images/createcomplete.png)
 
-Once it has been created, we must add permissions by creating a nodegroup for your cluster.
+Once it has been created, add permissions to the cluster by creating a nodegroup. Here is the procedure:
 
-To do this, navigate to the IAM service on the AWS Management Console. 
+- Navigate to the IAM service on the AWS Management Console and select the `Roles` section within the **Access Management** category. 
 
-ABC........
-![](./images/XXX.png)
-![](./images/XXX.png)
-![](./images/XXX.png)
-![](./images/XXX.png)
-![](./images/XXX.png)
-![](./images/XXX.png)
+![](./images/iam1.png)
+
+- Next, select `AWS Service` and then select `EC2` as the use case.
+
+![](./images/iam2.png)
+
+- Next, add each of the following permission policies. Once you have added them, click **Next**:
+
+      AmazonEKSWorkerNodePolicy
+      AmazonEKS_CNI_Policy
+      AmazonEC2ContainerRegistryReadOnly
 
 
-After you have completed the steps, you should see the node group in your cluster:
+![](./images/iam3.png)
+
+- Make sure that all of the permissions have been added!
+
+![](./images/iam5.png)
+
+- Next,enter your preferred Role Name and/or Description.
+
+![](./images/iam4.png)
+
+- Once you have created the role, you will see a confirmation banner on the top of your screen, as shown here:
+
+![](./images/iam6.png)
+
+
+- After you have completed the steps, navigate to the cluster on `Amazon EKS`. Click the `Compute` tab and then select `Add Node Group`.
+
+- Add the newly created node group to your cluster. Once you have added it, you should see the node group in your cluster:
 
 ![](./images/nodegroups.png)
 
 ### STEP 3: Install LitmusChaos
 
-Let’s install LitmusChaos on an Amazon EKS cluster using a Helm chart. The Helm chart will install the needed CRDs, service account configuration, and ChaosCenter.
+Now we will install LitmusChaos on an Amazon EKS cluster using a Helm chart. The Helm chart will install the needed CRDs, service account configuration, and ChaosCenter!
 
-Add the Litmus Helm repository using the command below:
-
-```bash
-helm repo add litmuschaos https://litmuschaos.github.io/litmus-helm/
-```
-
-Confirm that you have the Litmus-related Helm charts:
+- To begin, open Terminal, then add the Litmus Helm repository using the following command below:
 
 ```bash
-helm search repo litmuschaos
+$ helm repo add litmuschaos https://litmuschaos.github.io/litmus-helm/
 ```
 
-The output should look like below:
+- Next, confirm that you have the Litmus-related Helm charts:
+
+```bash
+$ helm search repo litmuschaos
+```
+
+- The output should look like below:
 
 ![](./images/litmusc.png)
 
-
-Create a namespace to install LitmusChaos.
+- Create a namespace to install LitmusChaos.
 
 ```bash
-kubectl create ns litmus
+$ kubectl create ns litmus
 ```
 
-By default, Litmus Helm chart creates NodePort services. Let’s change the backend service type to ClusterIP and front-end service type to LoadBalancer, so we can access the Litmus ChaosCenter using a load balancer.
+These Litmus Helm chart will create NodePort services. In order to access the Litmus Chaoscenter using a Load balancer, we must first make some configurations.
+
+- To begin this process, run the following command:
 
 ```bash
 cat <<EOF > override-litmus.yaml
@@ -205,25 +225,27 @@ helm install chaos litmuschaos/litmus --namespace=litmus -f override-litmus.yaml
 
 ![](./images/litmusns.png)
 
-Verify that LitmusChaos is running:
+- Next, verify that LitmusChaos is running using the following command:
 
 ```bash
-kubectl get pods -n litmus
+$ kubectl get pods -n litmus
 ```
 
-After a moment, uou should see a response similar to the one below:
+After a moment, you should see the `STATUS` displayed as **Running**, similar to the the image below:
 
 ![](./images/running.png)
 
 
+- Next, run the following command:
+
 ```bash
-kubectl get svc -n litmus
+$ kubectl get svc -n litmus
 ```
 
 ![](./images/svc.png)
 
 
-Now let's navigate to the LitmusChaos website:
+- Now that we've completed the process, let's navigate to the LitmusChaos website. Use the following commands to obtain the unique URL link:
 
 ```bash
 $ export LITMUS_FRONTEND_SERVICE=`kubectl get svc chaos-litmus-frontend-service -n litmus --output jsonpath='{.status.loadBalancer.ingress[0].hostname}:{.spec.ports[0].port}'`
@@ -236,46 +258,50 @@ The output should look something like this:
 
 ![](./images/chaosc.png)
 
-copy the http:// URL link provided, and enter it into your browser.
+- Copy the `http://` link provided, and enter it into the URL of your web browser.
 
-Next, on the main Litmus ChaosCenter UI page, sign in using the default username “admin” and password “litmus.” 
+- On the main Litmus ChaosCenter UI page, sign in using the following default credentials:
+  - **username**: `admin`
+  - **password**: `litmus` 
 
-After signing in, you will be prompted to set a new Password for your next sign in. Create a new password, or skip for now.
+After you have signed in, you will be prompted to set a new Password for your next sign in. Create a new password, or skip for now.
 
 ![](./images/signin.png)
 
-Next, you should see the welcome dashboard. Click on the ChaosAgents link from the left-hand navigation.
+- Next, you should see the welcome dashboard. Click on the ChaosAgents link from the left-hand navigation.
 
 ![](./images/welcome.png)
 
 
-A ChaosAgent represents the target cluster where Chaos would be injected via Litmus. Confirm that Self-Agent is in Active status. Note: It may take a couple of minutes for the Self-Agent to become active.
+A ChaosAgent represents the target cluster where Chaos would be injected via Litmus. Confirm that Self-Agent is in Active status. 
+
+_**Note**: It may take a couple of minutes for the Self-Agent to become active._
 
 ![](./images/chaosagents.png)
 
 
-Confirm the agent installation by running the command below.
+- Navigate back to your Terminal, and confirm the agent installation by running the command below:
 
 ```bash
 $ kubectl get pods -n litmus
 ```
 
-The output should look like below:
+The output should look something like this:
 
 ![](./images/confirm.png)
 
 
-Verify that LitmusChaos CRDs are created:
+- Verify that LitmusChaos CRDs have been created using the following command:
 
 ```bash
 $ kubectl get crds | grep chaos
 ```
 
-You should see a response similar to the one below showing chaosengines, chaosexperiments, and chaosresults.
+You should see a response that displays `ChaosEngines`, `ChaosExperiments`, and `ChaosResults`, as shown below:
 
 ![](./images/crds.png)
 
-Verify that LitmusChaos API resources are created:
+- Next, verify that LitmusChaos API resources have been created using the following command:
 
 ```bash
 $ kubectl api-resources | grep chaos
@@ -284,12 +310,11 @@ $ kubectl api-resources | grep chaos
 You should see a response similar to the one below:
 
 ![](./images/api.png)
-
-Now that we installed LitmusChaos on the EKS cluster, let’s install a demo application to perform some chaos experiments on.
-
 ### STEP 4: Install demo application
 
-Let’s deploy nginx on our cluster using the manifest below to run our chaos experiments on it. Save the manifest as nginx.yaml and apply it.
+Now that we installed LitmusChaos on the EKS cluster, let’s install a demo application for our experiments!
+
+First, we will deploy `Nginx` on our cluster. Create a file called `nginx.yaml` by running the following command:
 
 ```bash
 cat <<EOF > nginx.yaml
@@ -323,83 +348,107 @@ EOF
 kubectl apply -f nginx.yaml
 ```
 
-Verify if the nginx pod is running by executing the command below.
+- Next, verify whether the Nginx pod is running by executing the command:
 
 ```bash
-$ kubectl get pods
+$ kubectlget pods
 ```
+
+Here is the output you can expect to receive:
 
 ![](./images/nginx.png)
 
- ### STEP 5: Chaos Experiments
+### STEP 5: Chaos Experiment - Pod Autoscaler
 
-[Litmus ChaosHub](https://hub.litmuschaos.io/) is a public repository where LitmusChaos community members publish their chaos experiments such as **pod-delete,** **node-drain**, **node-cpu-hog**, etc. In this demo walkthrough, we will perform the **pod-autoscaler** experiment from LitmusChaos hub to test cluster auto scaling on Amazon EKS cluster.
+Now that we have installed LitmusChaos as well as the demo application, let's begin our experiments. 
 
-### STEP 6: Experiment - Pod Autoscaler
+[Litmus ChaosHub](https://hub.litmuschaos.io/) is a public repository where LitmusChaos community members publish their chaos experiments! Examples of these experiments include:
+- **pod-delete**
+- **node-drain**
+- **node-cpu-hog**
+_and many more..._
 
-The intent of the pod auto scaler experiment is to check the ability of nodes to accommodate the number of replicas for a deployment. Additionally, the experiment can also be used to check the cluster auto-scaling feature.
+We will utilize the **pod-autoscaler** experiment to test cluster auto scaling on Amazon EKS cluster.
 
-**Hypothesis**: Amazon EKS cluster should auto scale when cluster capacity is insufficient to run the pods.
 
-Chaos experiment can be launched using the Litmus ChaosCenter UI by creating a workflow. Navigate to Litmus Chaos Center and select **Litmus Workflows** in the left-hand navigation and then select the **Schedule a workflow** button to create a workflow.
+The `pod-autoscaler` experiment will be used to examine how effectively the nodes can accommodate the number of replicas for a deployment. It will also be used to examine the cluster's auto-scaling feature overall.
 
-![](./images/XXX.png)
+The hypothesis is that Amazon EKS cluster should auto scale when cluster capacity is insufficient to run the pods.
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos12.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos12.jpg)
+Let's test this hypothesis!
 
-Select the **Self-Agent** radio button on the Schedule a new Litmus workflow page and select **Next**.
+- Begin by navigating back to the Litmus Chaos Center on your web browser. Select **Litmus Workflows** in the left-hand navigation, and then select the **Schedule a workflow** button to create a workflow.
 
-![](./images/XXX.png)
+![](./images/litflow.png)
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos13.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos13.jpg)
 
-Choose **Create a new workflow using the experiments from ChaosHubs** and leave the **Litmus ChaosHub** selected from the dropdown.
+- Next, select the **Self-Agent** radio button on the _Schedule a new Litmus workflow_ page and then select **Next**.
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos14.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos14.jpg)
+![](./images/selfagent.png)
 
-Enter a name for your workflow on the next screen.
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos15.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos15.jpg)
+- Next, select **Create a new workflow using the experiments from ChaosHubs** and leave the **Litmus ChaosHub** selected from the dropdown.
 
-Let’s add the experiments in the next step. Select **Add a new experiment**; then search for autoscaler and select the **generic/pod-autoscaler** radio button.
+![](./images/schedule.png)
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos16.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos16.jpg)
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos17.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos17.jpg)
+- Enter a name for your workflow on the next screen.
 
-Let’s the edit the experiment and change some parameters. Choose the **Edit** icon:
+![](./images/name.png)
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos18.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos18.jpg)
+- Next, select **Add a new experiment**; then search for autoscaler in the searchbar. Select the **`generic/pod-autoscaler`** button.
 
-Accept the default values in the General, Target Application, and Define the steady state for this application sections. In the Tune Experiment section, set the TOTAL_CHAOS_DURATION to 180 and REPLICA_COUNT to 10. TOTAL_CHAOS_DURATION sets the desired chaos duration in seconds and REPLICA_COUNT is the number of replicas to scale during the experiment. Select **Finish**.
+![](./images/generic.png)
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos19.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos19.jpg)
+Great job! Now let's edit the experiment and change some parameters.
 
-Then, choose **Next** and accept the defaults for reliability score and schedule the experiment to run now. Finally, select **Finish** to run the chaos experiment.
+- To edit the experiment and change some parameters, simply choose the **Edit** icon:
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos20.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos20.jpg)
+![](./images/edit.png)
 
-The chaos experiment is now scheduled to run and you can look at the status by clicking on the workflow.
+- Keep all of the values as default in the following sections (_skip these sections_):
+  - `General`
+  - `Target Application`
+  - `Define the steady state for this application`
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos21.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos21.jpg)
+- Once you reach the `Tune Experiment` section, set the following parameters and then select **Finish** at the bottom:
+  - `TOTAL_CHAOS_DURATION` = 180 
+  - `REPLICA_COUNT` = 10. 
 
-From the ChaosResults, you will see that the experiment failed because there was no capacity in the cluster to run 10 replicas.
+![](./images/parameters.png)
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos22.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos22.jpg)
+- After that, choose **Next** and accept the default values for the `reliability score`, then schedule the experiment to run now. 
 
-### STEP 7: Install Cluster Autoscaler
+- Finally, select **Finish** to run the chaos experiment.
 
-Cluster Autoscaler for AWS provides integration with Auto Scaling groups. Cluster Autoscaler will attempt to determine the CPU, memory, and GPU resources provided by an Auto Scaling group based on the instance type specified in its launch configuration or launch template.
+![](./images/summary.png)
 
-Create an IAM OIDC identity provider for your cluster with the following command.
+Congrats! You have created your new Litmus workflow!
+
+![](./images/created.png)
+
+Nice work! The chaos experiment is now scheduled to run! You can view status by navigating to the workflow page, as shown here:
+
+![](./images/created1.png)
+
+After a few moments, you will observe that the experiment failed. The reason for this is because there was not enough capacity in the cluster to run 10 replicas.
+
+![](./images/failexp.png) 
+
+
+### STEP 6: Install Cluster Autoscaler
+
+Now, we will install the cluster Autoscaler. This will integrate with Auto Scaling groups on AWS.
+
+- From the command line, create an IAM OIDC identity provider for your cluster with the following command:
 
 ```bash
-eksctl utils associate-iam-oidc-provider --cluster eks-litmus-demo --approve
+$ eksctl utils associate-iam-oidc-provider --cluster eks-litmus-demo --approve
 ```
+![](./images/oidc.png)
+### STEP 7: Create an IAM policy and role
 
-### STEP 8: Create an IAM policy and role
-
-Create an IAM policy that grants the permissions that the Cluster Autoscaler requires to use an IAM role.
+- Next, we will create an IAM policy from the command line. This policy will grant the permissions that the Cluster Autoscaler needs to use an IAM role.
 
 ```bash
 cat <<EOF > cluster-autoscaler-policy.json
@@ -428,7 +477,7 @@ aws iam create-policy \
     --policy-document file://cluster-autoscaler-policy.json
 ```
 
-Create an IAM role and attach an IAM policy to it using eksctl.
+- Next, create an IAM role and attach an IAM policy to it using eksctl.
 
 ```bash
 eksctl create iamserviceaccount \
@@ -440,68 +489,61 @@ eksctl create iamserviceaccount \
     --approve
 ```
 
-Make sure your service account with the ARN of the IAM role is annotated.
+_**PLEASE NOTE**: Ensure that your service account corresponds with the ARN of the IAM role._
 
-If you get an error, use the following guide:
-https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html
+![](./images/iamserv.png)
+
+
+- Finally, ensure that your service account with the ARN of the IAM role is annotated.
 
 ```bash
 $ kubectl describe sa cluster-autoscaler -n kube-system
 ```
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos23.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos23.jpg)
+![](./images/annotated.png)
 
-### STEP 9: Deploy the Cluster Autoscaler
+### STEP 8: Deploy the Cluster Autoscaler
 
-Download the Cluster Autoscaler manifest.
+- In Terminal, run the following command to download the Cluster Autoscaler:
 
-```bash
+```
 curl -o cluster-autoscaler-autodiscover.yaml https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
 ```
 
-Edit the downloaded file to replace <YOUR CLUSTER NAME> with the cluster name (eks-litmus-demo) and add the following two lines.
+- Next, edit the downloaded file by replacing <YOUR CLUSTER NAME> with the cluster name (eks-litmus-demo). Also, add the following two lines in the `command` section:
 
 ```bash
 - --balance-similar-node-groups
 - --skip-nodes-with-system-pods=false
 ```
 
-The edited section should look like the following:
+![](./images/clusterauto.png)
 
-```bash
-command:
-  - ./cluster-autoscaler
-  - --v=4
-  - --stderrthreshold=info
-  - --cloud-provider=aws
-  - --skip-nodes-with-local-storage=false
-  - --expander=least-waste
-  - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/eks-litmus-demo
-  - --balance-similar-node-groups
-  - --skip-nodes-with-system-pods=false
-```
-
-Apply the manifest file to the cluster.
+- To apply the changes, run the following command:
 
 ```bash
 kubectl apply -f cluster-autoscaler-autodiscover.yaml
 ```
 
-Patch the deployment to add the `cluster-autoscaler.kubernetes.io/safe-to-evict` annotation to the Cluster Autoscaler pods with the following command.
+![](./images/kubectlapply.png)
+
+- Next, use the following command to patch the deployment. This will add the `cluster-autoscaler.kubernetes.io/safe-to-evict` annotation to the Cluster Autoscaler pods:
 
 ```bash
 kubectl patch deployment cluster-autoscaler \
 -n kube-system \
 -p '{"spec":{"template":{"metadata":{"annotations":{"cluster-autoscaler.kubernetes.io/safe-to-evict": "false"}}}}}'
 ```
+![](./images/patch.png)
 
-Find the latest Cluster Autoscaler version that matches the Kubernetes major and minor versions of your cluster. For example, if the Kubernetes version of your cluster is 1.21, find the latest Cluster Autoscaler release that begins with 1.21. Record the semantic version number (1.21.n) for that release to use in the next step.
+- Next, locate the latest Cluster Autoscaler version that matches both the Kubernetes major and minor versions of your cluster. 
+(_In my case, the Kubernetes version of my cluster is 1.21, therefore, I will use the Cluster Autoscaler release version 1.21)
 
 ```bash
 export K8S_VERSION=$(kubectl version --short | grep 'Server Version:' | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' | cut -d. -f1,2)export AUTOSCALER_VERSION=$(curl -s "https://api.github.com/repos/kubernetes/autoscaler/releases" | grep '"tag_name":' | grep -m1 ${K8S_VERSION} | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
 ```
 
-Set the Cluster Autoscaler image tag to the version that was exported in the previous step with the following command.
+Next, use the following command to set the Cluster Autoscaler image deployment:
 
 ```bash
 kubectl set image deployment cluster-autoscaler \
@@ -509,196 +551,58 @@ kubectl set image deployment cluster-autoscaler \
 cluster-autoscaler=k8s.gcr.io/autoscaling/cluster-autoscaler:${AUTOSCALER_VERSION}
 ```
 
-After you have deployed the Cluster Autoscaler, you can view the logs and verify that it’s monitoring your cluster load.
-
-View your Cluster Autoscaler logs with the following command.
+- View your Cluster Autoscaler logs with the following command:
 
 ```bash
 kubectl -n kube-system logs -f deployment.apps/cluster-autoscaler
 ```
 
-Now that we have deployed the Cluster Autoscaler, let’s rerun the same experiment by navigating to Litmus Workflows, then the Schedules tab. Select the three dots menu icon for the workflow and select **Rerun Schedule**.
+Here's what you should see after running the aforementioned commands:
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos24.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos24.jpg)
+![](./images/cmdsummary.png)
 
-This time, the Cluster Autoscaler will add additional nodes to the cluster, and the experiment will pass, which proves our hypothesis.
 
-![https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos25.jpg](https://d2908q01vomqb2.cloudfront.net/fe2ef495a1152561572949784c16bf23abb28057/2021/12/13/litmuschaos25.jpg)
+Great job! Now that the Cluster Autoscaler has been deployed, let’s rerun the same experiment.
 
-#### Experiment Conclusion
+- Begin by navigating back to Litmus Workflows on your web browser, then select the `Schedules` tab. Select the three dots menu icon for the workflow and select **Rerun Schedule**.
 
-Autoscaling the pod triggered the ClusterAautoscaler as a result of insufficient capacity, and a new node was added to the cluster, and the pods were successfully provisioned.
 
-#### Next steps
+![](./images/litworkrun.png)
 
-From the above walkthrough, we saw how to get started with Chaos Engineering using LitmusChaos on Amazon EKS cluster. There are additional experiments such as **pod-delete**, **node-drain**, **node-cpu-hog**, and so on that you can integrate with a CI/CD pipeline to perform Chaos Engineering. LitmusChaos also supports **gitops** and advanced chaos workflows using **Chaos Workflows**.
+Please wait a few moments for the workflow to process.
+
+Once completed, the Cluster Autoscaler will create additional nodes to the cluster, and the experiment will pass! 
+
+![](./images/pass.png)
+
+
+Excellent job! We've witnessed how Chaos Engineering works using LitmusChaos on Amazon EKS cluster!
+
+Autoscaling the pod triggered the `ClusterAautoscaler`, due to  insufficient capacity. This caused the experiment to fail. However, once a new node was added to the cluster, the pods were successfully created, and the experiment passed!
+
+There are even more experiments that we could examine, such as **pod-delete**, **node-drain**,and **node-cpu-hog**! All of these experiments can be integrated across a CI/CD pipeline to perform Chaos Engineering. 
+
+In the next section, let's explore some additional experiments. 
 
 -----------------------------------------------------------------------------------------
-## PART 2: pod-delete
+## PART 2: Additional Chaos Experiments
 
-Pod delete contains chaos to disrupt state of kubernetes resources. Experiments can inject random pod delete failures against specified application.
+Additional Chaos experiments can be used to disrupt state of our resources. This can be useful for testing deployment resilliency or overall recovery workflows of the application.
 
-- Causes (forced/graceful) pod failure of random replicas of an application deployment.
-- Tests deployment sanity (replica availability & uninterrupted service) and recovery workflows of the application pod.
+As we delve deeper into difference experiments, you can observe and manage the changed state of the cluster using an app called `Lens 5`, which an the Kubernetes IDE. [Click here](https://k8slens.dev/) to download and install it on your local PC.
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/225e0cfd-0187-4dbf-b8f7-25d43cb8584f/Untitled.png)
+![](./images/lens5.png)
 
-**PRE-REQUISITES:**
+### STEP 1: **Pod-delete Chaos Experiment**
 
-### **STEP 1: Install Litmus Operator**
-
-This is a tool for injecting Chaos Experiments
-
-**Installation[](https://docs.litmuschaos.io/docs/getting-started/installation/#installation)**
-
-Users looking to use Litmus for the first time have two options available to them today. One way is to use a hosted Litmus service like [ChaosNative Litmus Cloud](https://cloud.chaosnative.com/). Alternatively, users looking for some more flexibility can install Litmus into their own Kubernetes cluster.
-
-Users choosing the self-hosted option can refer to our Install and Configure docs for installing alternate versions and more detailed instructions.
-
-- Self-Hosted
-- Hosted (Beta)
-
-Installation of Self-Hosted Litmus can be done using either of the below 
-
-**methods** :
-
-[Helm3](https://docs.litmuschaos.io/docs/getting-started/installation/#install-litmus-using-helm) chart 
-
-[Kubectl](https://docs.litmuschaos.io/docs/getting-started/installation/#install-litmus-using-kubectl) yaml spec file. 
-
-Refer to the below details for Self-Hosted Litmus installation.
-
-### STEP 2: Install Litmus using Helm[](https://docs.litmuschaos.io/docs/getting-started/installation/#install-litmus-using-helm)
-
-The helm chart will install all the required service account configuration and ChaosCenter.
-
-The following steps will help you install Litmus ChaosCenter via helm.
-
-### STEP 3: Add the litmus helm repository[](https://docs.litmuschaos.io/docs/getting-started/installation/#step-1-add-the-litmus-helm-repository)
+- Install the `pod-delete` Chaos Experiment using the following command:
 
 ```bash
-helm repo add litmuschaos https://litmuschaos.github.io/litmus-helm/helm repo list
+$ kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.6.0?file=charts/generic/pod-delete/experiment.yaml
 ```
+![](./images/poddel.png)
 
-### STEP 4: Create the namespace on which you want to install Litmus ChaosCenter[](https://docs.litmuschaos.io/docs/getting-started/installation/#step-2-create-the-namespace-on-which-you-want-to-install-litmus-chaoscenter)
-
-- The ChaosCenter can be placed in any namespace, but for this scenario we are choose `litmus` as the namespace.
-
-```bash
-kubectl create ns litmus
-```
-
-### STEP 5: Install Litmus ChaosCenter[](https://docs.litmuschaos.io/docs/getting-started/installation/#step-3-install-litmus-chaoscenter)
-
-```bash
-helm install chaos litmuschaos/litmus --namespace=litmus
-```
-
-**Expected Output**
-
-```bash
-NAME: chaosLAST DEPLOYED: Tue Jun 15 19:20:09 2021NAMESPACE: litmusSTATUS: deployedREVISION: 1TEST SUITE: NoneNOTES:Thank you for installing litmus 😀Your release is named chaos and its installed to namespace: litmus.Visit https://docs.litmuschaos.io to find more info.
-```
-
-> **Note**: Litmus uses Kubernetes CRDs to define chaos intent. Helm3 handles CRDs better than Helm2. Before you start running a chaos experiment, verify if Litmus is installed correctly.
-> 
-
-### STEP 6: **Install Litmus using kubectl**[](https://docs.litmuschaos.io/docs/getting-started/installation/#install-litmus-using-kubectl)
-
-### STEP 7: **Install Litmus ChaosCenter**[](https://docs.litmuschaos.io/docs/getting-started/installation/#install-litmus-chaoscenter)
-
-Applying the manifest file will install all the required service account configuration and ChaosCenter.
-
-`kubectl apply -f https://litmuschaos.github.io/litmus/2.6.0/litmus-2.6.0.yaml`
-
-
-## STEP 7: Verification
-
-- **Verify your installation**[](https://docs.litmuschaos.io/docs/getting-started/installation/#verify-your-installation)
-
-- **Verify if the frontend, server, and database pods are running**[](https://docs.litmuschaos.io/docs/getting-started/installation/#verify-if-the-frontend-server-and-database-pods-are-running)
-
-- Check the pods in the namespace where you installed Litmus:
-    
-    **Expected Output**
-    
-    `kubectl get pods -n litmus`
-    
-    `NAME                                    READY   STATUS  RESTARTS  AGElitmusportal-frontend-97c8bf86b-mx89w   1/1     Running 2         6m24slitmusportal-server-5cfbfc88cc-m6c5j    2/2     Running 2         6m19smongo-0                                 1/1     Running 0         6m16s`
-    
-- Check the services running in the namespace where you installed Litmus:
-    
-    **Expected Output**
-    
-    `kubectl get svc -n litmus`
-    
-    `NAME                            TYPE        CLUSTER-IP      EXTERNAL-IP PORT(S)                       AGElitmusportal-frontend-service   NodePort    10.100.105.154  <none>      9091:30229/TCP                7m14slitmusportal-server-service     NodePort    10.100.150.175  <none>      9002:30479/TCP,9003:31949/TCP 7m8smongo-service                   ClusterIP   10.100.226.179  <none>      27017/TCP                     7m6s`
-    
-
-------------------------------------------------------------------------------------
-
-## PART 3: **Accessing the ChaosCenter**[](https://docs.litmuschaos.io/docs/getting-started/installation/#accessing-the-chaoscenter)
-
-### **STEP 1:** To setup and login to ChaosCenter expand the available services just created and copy the `PORT` of the `litmusportal-frontend-service` service
-
-`kubectl get svc -n litmus`
-
-**Expected Output**
-
-`NAME                            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGEchaos-litmus-portal-mongo       ClusterIP   10.104.107.117   <none>        27017/TCP                       2mlitmusportal-frontend-service   NodePort    10.101.81.70     <none>        9091:30385/TCP                  2mlitmusportal-server-service     NodePort    10.108.151.79    <none>        9002:32456/TCP,9003:31160/TCP   2m`Copy
-
-> **Note**: In this case, the PORT for litmusportal-frontend-service is 30385. Yours will be different.
-> 
-
-Once you have the PORT copied in your clipboard, simply use your IP and PORT in this manner `<NODEIP>:<PORT>` to access the Litmus ChaosCenter.
-
-For example:
-
-`http://172.17.0.3:30385/`
-
-> Where 172.17.0.3 is my NodeIP and 30385 is the frontend service PORT. If using a LoadBalancer, the only change would be to provide a <LoadBalancerIP>:<PORT>. Learn more about how to access ChaosCenter with LoadBalancer
-> 
-
-You should be able to see the Login Page of Litmus ChaosCenter. The **default credentials** are
-
-`Username: admin` 
-
-`Password: litmus`
-
-![https://docs.litmuschaos.io/assets/images/login-75d67e34bdfa757d7647811731e2637a.png](https://docs.litmuschaos.io/assets/images/login-75d67e34bdfa757d7647811731e2637a.png)
-
-By default you are assigned with a default project with Owner permissions.
-
-![https://docs.litmuschaos.io/assets/images/landing-page-f982e3f8ad10b1fbb380690da7ce57e3.png](https://docs.litmuschaos.io/assets/images/landing-page-f982e3f8ad10b1fbb380690da7ce57e3.png)
-
-### STEP 2: **Verify Successful Registration of the Self Agent**[](https://docs.litmuschaos.io/docs/getting-started/installation/#verify-successful-registration-of-the-self-agent)
-
-Once the project is created, the cluster is automatically registered as a chaos target via installation of [ChaosAgents](https://docs.litmuschaos.io/docs/getting-started/resources#chaosagents). This is represented as [Self-Agent](https://docs.litmuschaos.io/docs/getting-started/resources#types-of-chaosagents) in [ChaosCenter](https://docs.litmuschaos.io/docs/getting-started/resources#chaoscenter).
-
-`kubectl get pods -n litmus`
-
-`NAME                                     READY   STATUS    RESTARTS   AGEchaos-exporter-547b59d887-4dm58          1/1     Running   0          5m27schaos-operator-ce-84ddc8f5d7-l8c6d       1/1     Running   0          5m27sevent-tracker-5bc478cbd7-xlflb           1/1     Running   0          5m28slitmusportal-frontend-97c8bf86b-mx89w    1/1     Running   0          15mlitmusportal-server-5cfbfc88cc-m6c5j     2/2     Running   1          15mmongo-0                                  1/1     Running   0          15msubscriber-958948965-qbx29               1/1     Running   0          5m30sworkflow-controller-78fc7b6c6-w82m7      1/1     Running   0          5m32s`
-
-### **STEP 3:** **Install this Chaos Experiment**
-
-You can install the Chaos Experiment using the following command
-
-```bash
-kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.6.0?file=charts/generic/pod-delete/experiment.yaml
-```
-### **STEP 4:** **Setup Service Account (RBAC)**
-
-Create a service account using the following command
-
-```bash
-$ kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.6.0?file=charts/generic/pod-delete/rbac.yaml
-```
-
-### **STEP 5:** **Sample Chaos Engine**
-
-Create a file and name it `engine.yaml`
-
-Place the below code in the `engine.yaml` file
+- Next, create a file and name it `engine.yaml`, then place the below code inside of the `engine.yaml` file:
 
 ```bash
 apiVersion: litmuschaos.io/v1alpha1
@@ -736,41 +640,35 @@ spec:
               value: ''
 ```
 
-Once you download the yaml you can apply the yaml using the below command
+Next, apply changes made to the .yaml file using the following command:
 
 ```bash
 $ kubectl apply -f engine.yaml
 ```
+Here's what you can expect to see as the output:
 
-### **STEP 6:** Node-drain
+![](./images/filecreate.png)
 
-Drain the node where application pod is scheduled
+### **STEP 2: Node Drain Chaos Experiment**
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/e8094192-739b-4742-bfd1-b60585f4fdc8/Untitled.png)
+Now we will drain the node where application pod is scheduled! 
 
-**PRE-REQUISITES:**
+- Install the Chaos Experiment using the following command:
 
-**Install Litmus Operator**: a tool for injecting Chaos Experiments
-
-**Install this Chaos Experiment**
-
-You can install the Chaos Experiment using the following command
-
-```bash
+```
 $ kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.6.0?file=charts/generic/node-drain/experiment.yaml
+
 ```
 
-### STEP 7: **Setup Service Account (RBAC)**
+![](./images/nodedr.png)
 
-Create a service account using the following command
+- Next, create a service account using the following command:
 
-```bash
+```
 $ kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.6.0?file=charts/generic/node-drain/rbac.yaml
 ```
 
-Create a file and name it `generic.yaml`
-
-Place the below code in the `generic.yaml` file
+- Create a file and name it `generic.yaml`, then place the below code inside of the `generic.yaml` file:
 
 ```bash
 apiVersion: litmuschaos.io/v1alpha1
@@ -800,44 +698,34 @@ spec:
               value: ''
 ```
 
-Once you download the yaml you can apply the yaml using the below command
+- Next, apply the yaml file using the following command:
 
 ```bash
 $ kubectl apply -f generic.yaml
 ```
-------------------------------------------------------------------------------------------
-## PART 4: **node-cpu-hog**
 
-Node CPU hog contains chaos to disrupt the state of Kubernetes resources.
+![](./images/genericcmd.png)
 
-Node CPU hog contains chaos to disrupt the state of Kubernetes resources. Experiments can inject a CPU spike on a node where the application pod is scheduled.
+## STEP 3: **Node-cpu-hog Chaos Experiment**
 
-- CPU hog on a particular node where the application deployment is available.
-- After test, the recovery should be manual for the application pod and node in case they are not in an appropriate state.
+The **Node CPU hog** contains chaos to disrupt the state of Kubernetes resources, which can cause a CPU spike on a node where the application pod is scheduled.
 
-**PRE-REQUISITES:**
-
-- **Install Litmus Operator**: a tool for injecting Chaos Experiments
-
-- **Install this Chaos Experiment**
-
-The Chaos Experiment can be instlled using the following command:
+- The Chaos Experiment can be installed using the following command:
 
 ```
 $ kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.6.0?file=charts/generic/node-cpu-hog/experiment.yaml
 ```
 
-### STEP 1: **Setup Service Account (RBAC)**
-
-Create a service account using the following command
+- Next, create a service account using the following command
 
 ```bash
 $ kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.6.0?file=charts/generic/node-cpu-hog/rbac.yaml
 ```
 
-### STEP 2: Create a file and name it `node-cpu.yaml`
+![](./images/cpucmd.png)
 
-Place the below code in the node-cpu `node-cpu.yaml` file
+
+- Place the below code in the node-cpu `node-cpu.yaml` file:
 
 ```bash
 apiVersion: litmuschaos.io/v1alpha1
@@ -872,18 +760,49 @@ spec:
               value: ''
 ```
 
-### STEP 3: Apply yaml command
+![](./images/cpucmd0.png)
 
-Once you download the yaml you can apply the yaml using the below command
+- Once you have download the .yaml file, you can apply the the changes using the following commmand:
 
 ```bash
 $ kubectl apply -f node-cpu.yaml
 ```
-------------------------------------------------------------------------------------------
 
-# Clean up
+The state of the cluster can be observed on the Lens 5 application. 
 
-we will begin the clean up process, so that we do not get charged.
+![](./images/klens.png)
+
+
+
+-----------------------------------------------------------
+## Clean up
+
+Excellent work! Now we will begin the clean up process, so that we can prevent charges from prolonged usage of our resources.
+
+- The cluster can be deleted from Lens 5 by navigating to the `Clusters` tab and then right-clicking the cluster that you want to delete.
+
+![](./images/klensdel.png)
+
+- Alternatively, from the AWS management console, you can delete your cluster by navigating to the Amazon EKS service. Confirm that you want to delete the active cluster.
+
+![](./images/awsdel.png)
+
+- Lastly, delete node groups attached to the cluster. To do this, navigate to the `configuration` tab of your cluster, then click `compute`. In the **Node Groups** section, click `Delete` as highlighted below.
+
+![](./images/nodeg.png)
+
+- When prompted, confirm that you want to delete the nodes.
+
+![](./images/deletec.png)
+
+
+- Please be patient as your cluster is terminated. After a few moments, your cluster will no longer appear!
+
+![](./images/nocluster.png)
+
+
+
+--------------------------------------------------------
 ## Congratulations! 
 
-Nice work! You have successfully completed the project.
+Nice work! You have successfully completed the _LitmusChaos-on-Amazon-EKS_ project!
